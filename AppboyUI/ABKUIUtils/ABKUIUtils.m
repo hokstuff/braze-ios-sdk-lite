@@ -69,7 +69,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
 #pragma mark - View Hierarchy Helpers
 
 // Used in unit tests to mock the UIApplication instance used.
-+ (UIApplication *)application {
++ (UIApplication *)application NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   return UIApplication.sharedApplication;
 }
 
@@ -230,7 +230,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
   return [UIImage imageNamed:name inBundle:bundle compatibleWithTraitCollection:nil];
 }
 
-+ (UIInterfaceOrientation)getInterfaceOrientation {
++ (UIInterfaceOrientation)getInterfaceOrientation NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   if (@available(iOS 13.0, *)) {
     UIWindowScene *windowScene = ABKUIUtils.activeWindowScene;
     if (windowScene) {
@@ -240,7 +240,7 @@ static NSString * const ABKUIPodNFBundleName = @"AppboyUI.NewsFeed.bundle";
   return UIApplication.sharedApplication.statusBarOrientation;
 }
 
-+ (CGSize)getStatusBarSize {
++ (CGSize)getStatusBarSize NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   if (@available(iOS 13.0, *)) {
     UIWindowScene *windowScene = ABKUIUtils.activeWindowScene;
     if (windowScene) {

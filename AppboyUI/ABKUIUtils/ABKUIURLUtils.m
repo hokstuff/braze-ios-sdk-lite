@@ -58,7 +58,7 @@
   }
 }
 
-+ (void)openURL:(NSURL *)url {
++ (void)openURL:(NSURL *)url NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   if (@available(iOS 13.0, *)) {
     UIWindowScene *windowScene = ABKUIUtils.activeWindowScene;
     if (windowScene) {
@@ -83,7 +83,7 @@
 }
 
 + (void)displayModalWebViewWithURL:(NSURL *)URL
-             topmostViewController:(UIViewController *)topmostViewController {
+             topmostViewController:(UIViewController *)topmostViewController NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
   ABKModalWebViewController *webViewController = [[ABKModalWebViewController alloc] init];
   webViewController.url = URL;
   [topmostViewController presentViewController:webViewController animated:YES completion:nil];
