@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.3
 
 import PackageDescription
 
@@ -50,8 +50,7 @@ let package = Package(
         .process("ABKInAppMessage/Resources"),
         .process("ABKContentCards/Resources")
       ],
-      publicHeadersPath: "include/AppboyUI",
-      cSettings: [.define("CLANG_MODULES_AUTOLINK", to: "NO")]
+      publicHeadersPath: "include/AppboyUI"
     ),
     .binaryTarget(
       name: "AppboyPushStoryFramework",
