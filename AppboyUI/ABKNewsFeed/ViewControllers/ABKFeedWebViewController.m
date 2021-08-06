@@ -7,15 +7,19 @@ static NSString *const LocalizedNoConnectionKey = @"Appboy.no-connection.message
 
 @implementation ABKFeedWebViewController
 
-- (void)viewDidLoad NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+- (void)viewDidLoad {
   [super viewDidLoad];
-  
-  self.edgesForExtendedLayout = UIRectEdgeNone;
+
   self.webView.navigationDelegate = self;
-  
   self.webView = [self getWebView];
   self.view = self.webView;
-  
+
+#if !TARGET_OS_TV
+  if (@available(iOS 15.0, *)) {
+    self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+  }
+#endif
+
   [self setupProgressBar];
   
   if (self.showDoneButton) {
@@ -29,7 +33,6 @@ static NSString *const LocalizedNoConnectionKey = @"Appboy.no-connection.message
                     context:nil];
   
   [self.webView loadRequest:[NSURLRequest requestWithURL:self.url]];
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -136,16 +139,14 @@ static NSString *const LocalizedNoConnectionKey = @"Appboy.no-connection.message
   decisionHandler(WKNavigationActionPolicyAllow);
 }
 
-- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
-    NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
   self.progressBar.alpha = 0.0;
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
 }
 
-- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation
-      withError:(NSError *)error NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+- (void)webView:(WKWebView *)webView
+    didFailProvisionalNavigation:(WKNavigation *)navigation
+      withError:(NSError *)error {
   self.progressBar.alpha = 0.0;
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
   
   // Display localized "No Connection" message
   UILabel *label = [[UILabel alloc] init];

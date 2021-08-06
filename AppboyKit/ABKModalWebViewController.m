@@ -7,14 +7,17 @@ static NSString *const localizedNoConnectionKey = @"Appboy.no-connection.message
 
 @implementation ABKModalWebViewController
 
-- (void)viewDidLoad NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+- (void)viewDidLoad {
   [super viewDidLoad];
   
   UIViewController *webViewController = [[UIViewController alloc] init];
-  webViewController.edgesForExtendedLayout = UIRectEdgeNone;
-  
   self.webView = [self getWebView];
   webViewController.view = self.webView;
+#if !TARGET_OS_TV
+  if (@available(iOS 15.0, *)) {
+    self.view.backgroundColor = UIColor.systemGroupedBackgroundColor;
+  }
+#endif
 
   [self setupProgressBarWithViewController:webViewController];
   
@@ -27,7 +30,6 @@ static NSString *const localizedNoConnectionKey = @"Appboy.no-connection.message
   [self setViewControllers:@[webViewController]];
   
   [self.webView loadRequest:[NSURLRequest requestWithURL:self.url]];
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -138,16 +140,14 @@ static NSString *const localizedNoConnectionKey = @"Appboy.no-connection.message
   decisionHandler(WKNavigationActionPolicyAllow);
 }
 
-- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
   self.progressBar.alpha = 0.0;
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
 }
 
 - (void)webView:(WKWebView *)webView
     didFailProvisionalNavigation:(WKNavigation *)navigation
-      withError:(NSError *)error NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+      withError:(NSError *)error {
   self.progressBar.alpha = 0.0;
-  [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
   
   // Display localized "No Connection" message
   UILabel *label = [[UILabel alloc] init];
