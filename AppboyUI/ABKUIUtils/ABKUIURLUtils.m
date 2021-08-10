@@ -83,7 +83,7 @@
 }
 
 + (void)displayModalWebViewWithURL:(NSURL *)URL
-             topmostViewController:(UIViewController *)topmostViewController NS_EXTENSION_UNAVAILABLE_IOS("Not supported for iOS extensions.") {
+             topmostViewController:(UIViewController *)topmostViewController {
   ABKModalWebViewController *webViewController = [[ABKModalWebViewController alloc] init];
   webViewController.url = URL;
   [topmostViewController presentViewController:webViewController animated:YES completion:nil];
