@@ -19,8 +19,8 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      url: "https://github.com/hokstuff/braze-ios-sdk-lite/releases/download/4.3.2_pushStory_catalyst/AppboyKitLibrary.xcframework.zip",
-      checksum: "8efa891ad95fde1ca9031d855e1648e75b400f6c7d45fc38237b8c4234442f2c"
+      url: "https://github.com/hokstuff/braze-ios-sdk-lite/releases/download/4.3.2_pushStory_catalyst_2/AppboyKitLibrary.xcframework.zip",
+      checksum: "f8b63dcea704eebe9d59621a84c2eb08c76c3170d7c26ad9cfbb2e85215a2e15"
     ),
     .target(
       name: "AppboyKit",
@@ -54,8 +54,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "AppboyPushStoryFramework",
-      url: "https://github.com/hokstuff/braze-ios-sdk-lite/releases/download/4.3.2_pushStory_catalyst/AppboyPushStoryFramework.xcframework.zip",
-      checksum: "61049e5d6ab277f8cbcc0c4b3dee1c8e28fc4b856ac077ec1d48d1c92e187777"
+      url: "https://github.com/hokstuff/braze-ios-sdk-lite/releases/download/4.3.2_pushStory_catalyst_2/AppboyPushStoryFramework.xcframework.zip",
+      checksum: "edc306f261f3afca9ecce7b38b397c3962371aa0485c0639f11238692db2bc25"
     ),
     .target(
       name: "AppboyPushStory",
