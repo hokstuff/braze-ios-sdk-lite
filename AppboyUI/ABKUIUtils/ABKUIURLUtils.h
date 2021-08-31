@@ -9,8 +9,8 @@
         fromChannel:(ABKChannel)channel
          withExtras:(NSDictionary *)extras;
 + (BOOL)URL:(NSURL *)url shouldOpenInWebView:(BOOL)openUrlInWebView;
++ (BOOL)URLHasSystemScheme:(NSURL *)url;
 + (void)openURLWithSystem:(NSURL *)url;
-+ (void)openURLWithSystem:(NSURL *)url fromChannel:(ABKChannel)channel;
 + (UIViewController *)topmostViewControllerWithRootViewController:(UIViewController *)viewController;
 + (void)displayModalWebViewWithURL:(NSURL *)url
              topmostViewController:(UIViewController *)topmostViewController;

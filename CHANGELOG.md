@@ -1,3 +1,130 @@
+## NEXT
+
+##### Fixed
+- Fixes a race-condition occasionally preventing HTML in-app messages with assets from being displayed from a test push.
+- Fixes an issue which prevented HTML in-app messages from opening `sms:`, `mailto:`, `tel:`, `facetime:` and `facetime-audio:` urls.
+  - Previously, those urls would fail to open silently.
+
+##### Added
+- Adds methods `addToSubscriptionGroupWithGroupId:` and `removeFromSubscriptionGroupWithGroupId:` to `ABKUser` to manage SMS/Email Subscription Groups.
+  - Also adds `appboyBridge.getUser().addToSubscriptionGroup(groupId)` and `appboyBridge.getUser().removeFromSubscriptionGroup(groupId)` to the javascript interface for HTML in-app messages.
+
+## 4.3.2
+
+##### Fixed
+- Iframes embedded in an HTML in-app message are now displayed as part of the same in-app message. Previously, iframes would be loaded in a separate webview.
+
+##### Added
+- Adds support for navigation bar transparency changes introduced in iOS 15. Apps using Braze default UIs for Content Cards, the News Feed, and the modal WebView should upgrade to this version as soon as possible ahead of iOS 15's release.
+
+## 4.3.1
+
+##### Fixed
+- The `sdkAuthenticationDelegate` now works as expected when setting the property directly.
+- VoiceOver no longer reads content beneath the displayed in-app message.
+
+##### Changed
+- The number of unviewed Content Cards in `ABKContentCardsController`'s `unviewedContentCardCount` now excludes control cards.
+- The default Content Cards UI now allows swipe-to-refresh gestures when empty.
+- Deprecates `ABKInAppMessageController`'s method `displayNextInAppMessageWithDelegate:` in favor of `displayNextInAppMessage`.
+
+##### Added
+- Custom events and purchases now support nested properties. 
+  - In addition to integers, floats, booleans, dates, or strings, a JSON object can be provided containing dictionaries of arrays or nested dictionaries. All properties combined can be up to 50 KB in total length.
+
+## 4.3.0
+
+##### Breaking
+- Refined Content Cards UI public api changes introduced in `4.2.0`.
+
+##### Fixed
+- Fixes an issue introduced in `4.2.0` that caused Content Card type `ABKClassicImageContentCardCell` to crash on display when not using Storyboard.
+
+## 4.2.0
+
+##### ⚠️ Known Issues
+- This release contains a known issue with the Content Cards default UI on iOS, where showing a "Classic" type card with an image causes a crash. If you are using the default Content Cards UI, do not upgrade to this version.
+
+##### Breaking
+- Content Cards and News Feed are now more extensible!
+  - Class level API methods have changed to instance methods to make subclassing easier, however `getNavigationContentCardsViewController` and `getNavigationFeedViewController` are left in as class methods for backwards compatibility.
+  - Subclassing views is now fully supported for customizations. See the [Content Card sample code for examples](https://github.com/Appboy/appboy-ios-sdk/tree/master/Samples/ContentCards/BrazeContentCardsSampleApp).
+  - Alternatively, you can bring your own storyboard with customizations. See our [example custom storyboard implementation](https://github.com/Appboy/appboy-ios-sdk/tree/master/Example/Stopwatch/Sources/ViewControllers/Braze%20UI/FeedUIViewController.m).
+  - See the [Content Cards documentation](https://www.braze.com/docs/developer_guide/platform_integration_guides/ios/content_cards/) for more information.
+
+##### Fixed
+- Fixes an issue with Dynamic Type support introduced in [3.34.0](#3340) to be compatible with iOS 9.
+
+##### Added
+- Adds support for new SDK Authentication feature.
+- Exposes `window.brazeBridge` in HTML in-app messages which replaces `window.appboyBridge`. `appboyBridge` is deprecated and will be removed in a future version of the SDK.
+
+##### Changed
+- Makes in-app message window handling more resilient:
+  - The in-app message window tries to display up to 10 times when another window competes for visibility. If the in-app message is not guaranteed visibility, it is dismissed and an error is logged.
+- Improves `Appboy`'s `wipeDataAndDisableForAppRun` and `disableSDK` to handle additional use cases.
+- Deprecates `flushDataAndProcessRequestQueue` in favor of `requestImmediateDataFlush`.
+
+## 4.1.0
+
+##### Breaking
+- `ABKURLDelegate` method `handleAppboyURL:fromChannel:withExtras:` is now invoked for all urls.
+  - Previously, this delegate method was not invoked for urls opened in a WebView or the default browser when originating from the News Feed or Content Cards.
+- Removes `ABKUIURLUtils` method `openURLWithSystem:fromChannel:`. Use `openURLWithSystem:` as a replacement.
+
+##### Fixed
+- Fixes a case where the `ABKURLDelegate` method `handleAppboyURL:fromChannel:withExtras:` was being called twice when opening a push notification with an url.
+
+##### Changed
+- Deprecates `ABKUnknownChannel`.
+
+## 4.0.2
+
+##### Fixed
+- Fixes a double redirection bug in Push Stories when the app is in a terminated state and `application:didReceiveRemoteNotification:fetchCompletionHandler:` is not implemented.
+
+##### Changed
+- Improves the Swift Package Manager bundle lookup to be more flexible.
+
+##### Added
+- Adds support to use a dictionary named `Braze` instead of `Appboy` when adding customization in the `Info.plist`. After adding the `Braze` dictionary, please remove the previous `Appboy` dictionary.
+
+## 4.0.1
+
+##### Fixed
+- Sets `CFBundleSupportedPlatforms` in _.plist_ files to the correct non-simulator value.
+- Removes the Dynamic Type support warnings.
+
+## 4.0.0
+
+##### Breaking
+- `AppboyKit` is now distributed as an XCFramework when integrating with Cocoapods. Cocoapods 1.10.0+ is required.
+  - This removes the need for integrators to exclude the `arm64` architecture when building for the simulator. Please undo any of the changes that may have been made when upgrading to [3.27.0 (_Integrators will now be required to exclude ..._)](#3.27.0_4.0.0).
+
+##### Fixed
+- Fixes the Swift Package Manager cleanup script to remove only the necessary files.
+
+##### Added
+- Adds Mac Catalyst support for apps integrating with Cocoapods.
+
+## 3.34.0
+
+##### Breaking
+- Replaces `ABKInAppMessageSlideupViewController`'s `slideConstraint` by `offset`.
+
+##### Added
+- Adds a new Github repo to optimize import speeds for applications integrating with Swift Package Manager.
+  - To use this repo, follow these steps:
+    - Remove the existing package in your application that points to the url: `https://github.com/Appboy/Appboy-ios-sdk`.
+    - Add a new package using the new url: `https://github.com/braze-inc/braze-ios-sdk`.
+    - Follow the rest of [the setup instructions here](https://www.braze.com/docs/developer_guide/platform_integration_guides/ios/initial_sdk_setup/swift_package_manager/).
+- Adds support for Right-to-Left languages in the News Feed.
+- Adds support for scaling fonts automatically with [Dynamic Type](https://apple.co/3jSe9hc) for in-app messages and the News Feed.
+
+##### Changed
+- Improves accessibility handling for modal and full in-app messages.
+- Improves Slideup in-app message animations.
+
 ## 3.33.1
 
 ##### Fixed
@@ -14,12 +141,13 @@
   - In your application target:
     - Delete the `Copy File` build phase copying the `AppboyPushStory.framework` to the `Frameworks` destination.
     - Delete the `Run Script` build phase that starts with:
-```
-APP_PATH="${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+      ```
+      APP_PATH="${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
 
-find "$APP_PATH" -name 'AppboyPushStory.framework' -type d | while read -r FRAMEWORK
-...
-```
+      find "$APP_PATH" -name 'AppboyPushStory.framework' -type d | while read -r FRAMEWORK
+      ...
+      ```
+
 - Removed `ABKSDWebImageProxy`'s `prefetchURLs:` method.
 
 ##### Fixed
@@ -143,7 +271,7 @@ find "$APP_PATH" -name 'AppboyPushStory.framework' -type d | while read -r FRAME
   - If you do not use the `Ad Tracking Enabled` segment filter and are not implementing `AppTrackingTransparency` yet, your implementation of `isAdvertisingTrackingEnabledOrATTAuthorized` may temporarily continue to use `isAdvertisingTrackingEnabled`. However, [the returned value will always be `NO` in iOS 14](https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614148-isadvertisingtrackingenabled), regardless of actual IDFA availability.
   - Note that Apple announced that they will delay the enforcement of upcoming IDFA changes until early 2021. Please reference our [iOS 14 upgrade guide](https://www.braze.com/docs/developer_guide/platform_integration_guides/ios/ios_14/) for more details.
 - Updates the minimum required version of SDWebImage from 5.0 to 5.8.2.
-- Integrators will now be required to exclude the `arm64` simulator slice in their entire project.
+- <a name="3.27.0_4.0.0"></a>Integrators will now be required to exclude the `arm64` simulator slice in their entire project.
   - This is done automatically when integrating via Cocoapods.
   - For other cases:
     - If you are using `xcconfig` files to build your app, please set:

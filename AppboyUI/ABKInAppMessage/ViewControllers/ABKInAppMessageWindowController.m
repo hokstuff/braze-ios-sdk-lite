@@ -16,6 +16,14 @@
 #import "ABKUIUtils.h"
 
 static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
+static CGFloat const SlideUpDragResistanceFactor = 0.055;
+static NSInteger const KeyWindowRetryMaxCount = 10;
+
+@interface ABKInAppMessageWindowController ()
+
+@property (nonatomic, assign) NSInteger keyWindowRetryCount;
+
+@end
 
 @implementation ABKInAppMessageWindowController
 
@@ -32,10 +40,9 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
     _inAppMessageWindow.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
     _inAppMessageIsTapped = NO;
     _clickedButtonId = -1;
-    return self;
-  } else {
-    return nil;
+    _keyWindowRetryCount = 0;
   }
+  return self;
 }
 
 #pragma mark - Lifecycle Methods
@@ -73,6 +80,12 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
       [self.view addGestureRecognizer:inAppModalOutsideTapGesture];
     }
   }
+
+  if ([self.inAppMessageViewController isKindOfClass:[ABKInAppMessageImmersiveViewController class]] ||
+      [self.inAppMessageViewController isKindOfClass:[ABKInAppMessageHTMLBaseViewController class]]) {
+    self.inAppMessageWindow.accessibilityViewIsModal = YES;
+  }
+
   [self.view addSubview:self.inAppMessageViewController.view];
 }
 
@@ -134,73 +147,50 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
 
 - (void)inAppSlideupWasPanned:(UIPanGestureRecognizer *)panGestureRecognizer {
   ABKInAppMessageSlideupViewController *slideupVC = (ABKInAppMessageSlideupViewController *)self.inAppMessageViewController;
+  BOOL animatesFromTop = ((ABKInAppMessageSlideup *)self.inAppMessage).inAppMessageSlideupAnchor == ABKInAppMessageSlideupFromTop;
+  CGFloat offset = [panGestureRecognizer translationInView:self.view].y;
+  CGFloat velocity = [panGestureRecognizer velocityInView:self.view].y;
   
   switch (panGestureRecognizer.state) {
-    case UIGestureRecognizerStateBegan: {
-      self.slideupConstraintMaxValue = slideupVC.slideConstraint.constant;
-      self.inAppMessagePreviousPanPosition = [panGestureRecognizer locationInView:self.inAppMessageViewController.view];
-      break;
-    }
-      
     case UIGestureRecognizerStateChanged: {
-      CGPoint position = [panGestureRecognizer locationInView:self.inAppMessageViewController.view];
-      CGFloat direction = ((ABKInAppMessageSlideup *)self.inAppMessage).inAppMessageSlideupAnchor
-                          == ABKInAppMessageSlideupFromBottom ? 1.0f : -1.0f;
-      CGFloat diffY = (position.y - self.inAppMessagePreviousPanPosition.y) * direction;
-      
-      if (diffY > 0) {
-        // The in-ap message is moved toward the near edge of the screen. The user is attempting to
-        // dismiss the in-app message.
-        slideupVC.slideConstraint.constant -= diffY * 2.0f;
+      if (animatesFromTop) {
+        slideupVC.offset = offset <= 0 ? offset : (SlideUpDragResistanceFactor * offset);
       } else {
-        // The in-app message is moved away from the near edge of the screen. The user is NOT attempting
-        // to dismiss the in-app message.
-        CGFloat moveY = -diffY * 0.3f;
-        if (slideupVC.slideConstraint.constant + moveY <= self.slideupConstraintMaxValue) {
-          slideupVC.slideConstraint.constant += moveY;
-        } else {
-          slideupVC.slideConstraint.constant = self.slideupConstraintMaxValue;
-        }
+        slideupVC.offset = offset >= 0 ? offset : (SlideUpDragResistanceFactor * offset);
       }
-      self.inAppMessagePreviousPanPosition = position;
       break;
     }
       
     case UIGestureRecognizerStateEnded:
     case UIGestureRecognizerStateCancelled: {
-      // The panning is finished. If the in-app messaged moved more than 25% of the distance towards the
-      // edge, dismiss the in-app message.
-      if ((self.slideupConstraintMaxValue - slideupVC.slideConstraint.constant) >
-          self.slideupConstraintMaxValue / 4) {
-        [self invalidateSlideAwayTimer];
-        
-        if ([self.inAppMessageUIDelegate respondsToSelector:@selector(onInAppMessageDismissed:)]) {
-          [self.inAppMessageUIDelegate onInAppMessageDismissed:self.inAppMessage];
-        }
-        
-        CGFloat velocity = [panGestureRecognizer velocityInView:self.inAppMessageViewController.view].y;
-        velocity = fabs(velocity) > MinimumInAppMessageDismissVelocity ?
-                   velocity : MinimumInAppMessageDismissVelocity;
-        NSTimeInterval animationDuration = slideupVC.slideConstraint.constant / velocity;
-        [self.inAppMessageViewController beforeMoveInAppMessageViewOffScreen];
-        [UIView animateWithDuration:animationDuration
-                              delay:0
-                            options:UIViewAnimationOptionBeginFromCurrentState
-                         animations:^{
-                           [self.inAppMessageViewController moveInAppMessageViewOffScreen];
-                         }
-                         completion:^(BOOL finished){
-                           if (finished) {
-                             [self hideInAppMessageWindow];
-                           }
-                         }];
-      } else {
-        // The in-app message hasn't moved enough to be dismissed. Move it back to the original position.
-        slideupVC.slideConstraint.constant = self.slideupConstraintMaxValue;
-        [UIView animateWithDuration:0.2f animations:^{
+      // Reset position
+      if ((animatesFromTop && slideupVC.offset > 0) ||
+          (!animatesFromTop && slideupVC.offset < 0) ||
+          (fabs(velocity) < MinimumInAppMessageDismissVelocity && fabs(offset) < 16)) {
+        slideupVC.offset = 0;
+        [UIView animateWithDuration:0.2 animations:^{
           [self.view layoutIfNeeded];
         }];
+        return;
       }
+
+      // Dismiss
+      [self invalidateSlideAwayTimer];
+
+      if ([self.inAppMessageUIDelegate respondsToSelector:@selector(onInAppMessageDismissed:)]) {
+        [self.inAppMessageUIDelegate onInAppMessageDismissed:self.inAppMessage];
+      }
+
+      [slideupVC beforeMoveInAppMessageViewOffScreen];
+      [UIView animateWithDuration:0.2
+                       animations:^{
+                         [slideupVC moveInAppMessageViewOffScreen];
+                       }
+                       completion:^(BOOL finished) {
+                         if (finished) {
+                           [self hideInAppMessageWindow];
+                         }
+                       }];
       break;
     }
       
@@ -265,23 +255,38 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
 #pragma mark - Windows
 
 /*!
- * React to windows changes in the view hierarchy. This is needed to ensure that the in-app message stays visible in cases where the
- * host app decides to display a window (possibly the app's main window) over our in-app message.
+ * React to windows changes in the view hierarchy. This is needed to ensure that the in-app message
+ * stays visible in cases where the host app decides to display a window (possibly the app's main
+ * window) over our in-app message.
  *
- * e.g. Some clients have extra logic when bootstrapping their app that can lead to the app's main window being made key and visible
- * after a delay at startup. In the case of test in-app messages delivered via push notifications, our in-app messages would be displayed
- * before the host app window being made key and visible. Soon after, the host app window takes over and hides our in-app message.
+ * This method tries to make the in-app message window visible up to 10 times. The in-app message
+ * is dismissed when reaching that value to prevent infinite loops when another window in the view
+ * hierarchy has a similar behavior.
+ *
+ * e.g. Some clients have extra logic when bootstrapping their app that can lead to the app's main
+ * window being made key and visible after a delay at startup. In the case of test in-app messages
+ * delivered via push notifications, our in-app messages would be displayed before the host app
+ * window being made key and visible. Soon after, the host app window takes over and hides our
+ * in-app message.
  */
 - (void)handleWindowDidBecomeKeyNotification:(NSNotification *)notification {
   UIWindow *window = notification.object;
 
-  // Skip for the in-app message window
-  if (window == self.inAppMessageWindow) {
+  // Skip for any in-app message window
+  if ([window isKindOfClass:[ABKInAppMessageWindow class]]) {
     return;
   }
   // Skip if the new key window is meant to be displayed above the in-app message (alert, sheet,
   // host app toast)
   if (window.windowLevel > UIWindowLevelNormal) {
+    return;
+  }
+
+  // Dismiss in-app message if we can't guarantee its visibility.
+  self.keyWindowRetryCount += 1;
+  if (self.keyWindowRetryCount >= KeyWindowRetryMaxCount) {
+    NSLog(@"Error: Failed to make in-app message window key and visible %ld times, dismissing the in-app message.", (long)self.keyWindowRetryCount);
+    [self hideInAppMessageViewWithAnimation:YES];
     return;
   }
   
@@ -295,6 +300,7 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
   dispatch_async(dispatch_get_main_queue(), ^{
     // Set the root view controller after the inAppMessagewindow becomes the key window so it gets the
     // correct window size during and after rotation.
+    self.keyWindowRetryCount = 0;
     [self.inAppMessageWindow makeKeyWindow];
     self.inAppMessageWindow.rootViewController = self;
     self.inAppMessageWindow.hidden = NO;
@@ -418,26 +424,24 @@ static CGFloat const MinimumInAppMessageDismissVelocity = 20.0;
 #pragma mark - URL Handling
 
 - (void)handleInAppMessageURL:(NSURL *)url inWebView:(BOOL)openUrlInWebView {
-  if (![self delegateHandlesInAppMessageURL:url]) {
-    [self openInAppMessageURL:url inWebView:openUrlInWebView];
+  // URL Delegate
+  if ([ABKUIURLUtils URLDelegate:Appboy.sharedInstance.appboyUrlDelegate
+                      handlesURL:url
+                     fromChannel:ABKInAppMessageChannel
+                      withExtras:self.inAppMessage.extras]) {
+    return;
   }
-}
 
-- (BOOL)delegateHandlesInAppMessageURL:(NSURL *)url {
-  return [ABKUIURLUtils URLDelegate:[Appboy sharedInstance].appboyUrlDelegate
-                           handlesURL:url
-                          fromChannel:ABKInAppMessageChannel
-                           withExtras:self.inAppMessage.extras];
-}
-
-- (void)openInAppMessageURL:(NSURL *)url inWebView:(BOOL)openUrlInWebView {
+  // WebView
   if ([ABKUIURLUtils URL:url shouldOpenInWebView:openUrlInWebView]) {
     UIViewController *topmostViewController =
-      [ABKUIURLUtils topmostViewControllerWithRootViewController:ABKUIUtils.activeApplicationViewController];
+    [ABKUIURLUtils topmostViewControllerWithRootViewController:ABKUIUtils.activeApplicationViewController];
     [ABKUIURLUtils displayModalWebViewWithURL:url topmostViewController:topmostViewController];
-  } else {
-    [ABKUIURLUtils openURLWithSystem:url fromChannel:ABKInAppMessageChannel];
+    return;
   }
+
+  // System
+  [ABKUIURLUtils openURLWithSystem:url];
 }
 
 #pragma mark - Helpers
