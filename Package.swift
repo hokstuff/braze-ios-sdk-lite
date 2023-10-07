@@ -19,18 +19,16 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "AppboyKitLibrary",
-      url: "https://github.com/Appboy/appboy-ios-sdk/releases/download/3.33.1/AppboyKitLibrary.xcframework.zip",
-      checksum: "1d4fa7b81441f3783b4933f48005fe666fb968606d8e28affd848c58371778e8"
+      url: "https://github.com/Appboy/appboy-ios-sdk/releases/download/4.5.5/AppboyKitLibrary.xcframework.zip",
+      checksum: "299206567a578860aba197f628bb8efde37f2d6af943ac376c40c9c3b72bfd16"
     ),
     .target(
       name: "AppboyKit",
       dependencies: ["SDWebImage", "AppboyKitLibrary"],
       path: "AppboyKit",
       resources: [
-        .process("Appboy.bundle"),
-        .process("headers/AppboyKitLibrary/ZipArchive_LICENSE.txt")
+        .process("Appboy.bundle")
       ],
-      publicHeadersPath: "headers/AppboyKitLibrary",
       linkerSettings: [
         .linkedFramework("SystemConfiguration"),
         .linkedFramework("QuartzCore"),
@@ -38,7 +36,6 @@ let package = Package(
         .linkedFramework("CoreText"),
         .linkedFramework("WebKit"),
         .linkedFramework("UserNotifications"),
-        .linkedFramework("StoreKit"),
         .linkedFramework("CoreTelephony", .when(platforms: [.iOS])),
         .linkedLibrary("z"),
       ]
@@ -56,8 +53,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "AppboyPushStoryFramework",
-      url: "https://github.com/Appboy/appboy-ios-sdk/releases/download/3.33.1/AppboyPushStoryFramework.xcframework.zip",
-      checksum: "328e2063782236b49b0b8aafa3a564ab54e682f259fbf94ae976351a0fe5cd10"
+      url: "https://github.com/Appboy/appboy-ios-sdk/releases/download/4.5.5/AppboyPushStoryFramework.xcframework.zip",
+      checksum: "73bb2e7c998f08f693213227261d76f120682c0ee69fe6593c29b73adeef4dd5"
     ),
     .target(
       name: "AppboyPushStory",

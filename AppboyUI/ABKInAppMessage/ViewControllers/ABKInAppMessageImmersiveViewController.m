@@ -8,6 +8,12 @@ static NSInteger const CloseButtonTag = 50;
 
 #pragma mark - Immersive In-App Message View UI Initialization
 
+- (void)viewDidLoad {
+  [super viewDidLoad];
+
+  [ABKUIUtils enableAdjustsFontForContentSizeCategory:self.inAppMessageMessageLabel];
+}
+
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
   
@@ -22,6 +28,7 @@ static NSInteger const CloseButtonTag = 50;
     [self.inAppMessageHeaderLabel setTextColor:inAppMessage.headerTextColor];
   }
   [self changeCloseButtonColor];
+  [self setCloseButtonAccessibilityLabel];
   
   if (inAppMessage.imageStyle == ABKInAppMessageGraphic) {
     [self setupLayoutForGraphic];
@@ -36,7 +43,6 @@ static NSInteger const CloseButtonTag = 50;
       self.view.superview.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:.3];
     }
   }
-  self.view.superview.accessibilityViewIsModal = YES;
   
   NSLayoutConstraint *centerYConstraint = [NSLayoutConstraint constraintWithItem:self.view
                                                                        attribute:NSLayoutAttributeCenterY
@@ -59,13 +65,20 @@ static NSInteger const CloseButtonTag = 50;
   self.view.alpha = 0.0f;
 }
 
-- (void)changeCloseButtonColor {
+- (nullable UIButton *)getCloseButton {
   UIView *buttonView = [self.view viewWithTag:CloseButtonTag];
   if ([buttonView isKindOfClass:[UIButton class]]) {
+    return (UIButton *) buttonView;
+  }
+  return nil;
+}
+
+- (void)changeCloseButtonColor {
+  UIButton *closeButton = [self getCloseButton];
+  if (closeButton != nil) {
     UIColor *closeButtonColor = [self getInAppMessage].closeButtonColor ?
       [self getInAppMessage].closeButtonColor :
       [UIColor colorWithRed:(155.0/255.0) green:(155.0/255.0) blue:(155.0/255.0) alpha:1.0];
-    UIButton *closeButton = (UIButton *)buttonView;
     UIImageView *closeButtonImageView = closeButton.imageView;
     closeButtonImageView.image = [closeButtonImageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     closeButtonImageView.tintColor = closeButtonColor;
@@ -76,6 +89,19 @@ static NSInteger const CloseButtonTag = 50;
     closeButtonSelectedImageView.tintColor = [closeButtonColor colorWithAlphaComponent:InAppMessageSelectedOpacity];
     [closeButton setImage:closeButtonSelectedImageView.image forState:UIControlStateSelected];
   }
+}
+
+- (void)setCloseButtonAccessibilityLabel {
+  UIButton *closeButton = [self getCloseButton];
+  if (closeButton != nil) {
+    closeButton.accessibilityLabel = [self localizedAppboyInAppMessageString:@"Appboy.in-app-message.close-button.title"];
+  }
+}
+
+- (NSString *)localizedAppboyInAppMessageString:(NSString *)key {
+  return [ABKUIUtils getLocalizedString:key
+                         inAppboyBundle:[ABKUIUtils bundle:[ABKInAppMessageImmersiveViewController class] channel:ABKInAppMessageChannel]
+                                   table:@"AppboyInAppMessageLocalizable"];
 }
 
 - (void)setupLayoutForGraphic {

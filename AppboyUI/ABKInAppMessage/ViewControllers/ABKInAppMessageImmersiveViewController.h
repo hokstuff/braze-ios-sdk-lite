@@ -2,7 +2,7 @@
 #import "ABKInAppMessageUIButton.h"
 
 // Customize this to set the font for the in-app message header.
-#define HeaderLabelDefaultFont [UIFont boldSystemFontOfSize:20.0]
+#define HeaderLabelDefaultFont [ABKUIUtils preferredFontForTextStyle:UIFontTextStyleTitle3 weight:UIFontWeightBold]
 
 NS_ASSUME_NONNULL_BEGIN
 @interface ABKInAppMessageImmersiveViewController : ABKInAppMessageViewController
@@ -24,12 +24,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /*!
  * The UIButton on the left of the in-app message.
- * When there is only one button in the in-app message, this left button is the one that is used.
  */
 @property (retain, nonatomic, nullable) IBOutlet ABKInAppMessageUIButton *leftInAppMessageButton;
 
 /*!
  * The UIButton on the right of the in-app message.
+ * When there is only one button in the in-app message, this right button is the one that is used.
  */
 @property (retain, nonatomic, nullable) IBOutlet ABKInAppMessageUIButton *rightInAppMessageButton;
 
